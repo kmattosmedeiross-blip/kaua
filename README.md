@@ -2,10 +2,11 @@
 
 # Zotify
 
+This is a fork of Zotify's [dev branch](https://github.com/zotify-dev/zotify/tree/v1.0-dev) which hasn't seen any activity for months. This fork will be updated to include missing/unimplemented features and maintained by yours truly until the original developers decide to come home with the milk.
+
 A customizable music and podcast downloader. \
 Formerly ZSp‌otify.
 
-Available on [zotify.xyz](https://zotify.xyz/zotify/zotify) and [GitHub](https://github.com/zotify-dev/zotify). \
 Built on [Librespot](https://github.com/kokarare1212/librespot-python).
 
 ## Features
@@ -25,9 +26,10 @@ Built on [Librespot](https://github.com/kokarare1212/librespot-python).
 
 Requires Python 3.11 or greater. \
 Optionally requires FFmpeg to save tracks as anything other than Ogg Vorbis.
+(FFmpeg installation instructions available [here](https://github.com/KDalu/zotify/blob/main/INSTALLATION.md))
 
 Enter the following command in terminal to install Zotify. \
-`python -m pip install https://get.zotify.xyz`
+`python -m pip install git+https://github.com/KDalu/zotify.git`
 
 ## General Usage
 
@@ -38,7 +40,7 @@ Downloads specified items. Accepts any combination of track, album, playlist, ep
 
 ### Basic options
 
-```
+```text
     -p,  --playlist         Download selection of user's saved playlists
     -lt, --liked-tracks     Download user's liked tracks
     -le, --liked-episodes   Download user's liked episodes
@@ -60,11 +62,13 @@ Downloads specified items. Accepts any combination of track, album, playlist, ep
 | output_playlist_episode | --output-playlist-episode | File layout for episodes in a playlist              | {playlist}/{playlist_number}. {episode_number} - {title}   |
 | output_podcast          | --output-podcast          | File layout for saved podcasts                      | {podcast}/{episode_number} - {title}                       |
 | download_quality        | --download-quality        | Audio download quality (auto for highest available) |                                                            |
+| download_real_time      | --download-real-time      | Downloads songs as fast as they would be played     |                                                            |
 | audio_format            | --audio-format            | Audio format of final track output                  |                                                            |
 | transcode_bitrate       | --transcode-bitrate       | Transcoding bitrate (-1 to use download rate)       |                                                            |
 | ffmpeg_path             | --ffmpeg-path             | Path to ffmpeg binary                               |                                                            |
 | ffmpeg_args             | --ffmpeg-args             | Additional ffmpeg arguments when transcoding        |                                                            |
 | save_credentials        | --save-credentials        | Save login credentials to a file                    |                                                            |
+| replace_existing        | --replace-existing        | Redownload and replace songs if they already exist  |                                                            |
 
 </details>
 

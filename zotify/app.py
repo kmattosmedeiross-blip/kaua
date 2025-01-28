@@ -250,9 +250,16 @@ class App:
                 # Get track data
                 if playable.type == PlayableType.TRACK:
                     with Loader("Fetching track..."):
-                        track = self.__session.get_track(
-                            playable.id, self.__config.download_quality
-                        )
+                        try:
+                            track = self.__session.get_track(
+                                playable.id, self.__config.download_quality
+                            )
+                        except RuntimeError as err:
+                            Logger.log(
+                                LogChannel.SKIPS,
+                                f'Skipping song id = {playable.id}: {err}',
+                            )
+                            continue
                 elif playable.type == PlayableType.EPISODE:
                     with Loader("Fetching episode..."):
                         track = self.__session.get_episode(playable.id)
@@ -267,9 +274,10 @@ class App:
                 track.metadata.extend(playable.metadata)
                 try:
                     output = track.create_output(
+                        self.__config.audio_format.value.ext,
                         playable.library,
                         playable.output_template,
-                        self.__config.replace_existing,
+                        self.__config.replace_existing
                     )
                 except FileExistsError:
                     Logger.log(
@@ -283,7 +291,7 @@ class App:
                     desc=f"({count}/{total}) {track.name}",
                     total=track.input_stream.size,
                 ) as p_bar:
-                    file = track.write_audio_stream(output, p_bar)
+                    file = track.write_audio_stream(output, p_bar, self.__config.download_real_time)
 
                 # Download lyrics
                 if playable.type == PlayableType.TRACK and self.__config.lyrics_file:

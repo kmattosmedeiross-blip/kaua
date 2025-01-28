@@ -1,5 +1,6 @@
 from math import floor
 from pathlib import Path
+from time import time, sleep
 
 from librespot.core import PlayableContentFeeder
 from librespot.metadata import AlbumId
@@ -64,6 +65,7 @@ class Playable:
 
     def create_output(
         self,
+        ext: str,
         library: Path | str = Path("./"),
         output: str = "{title}",
         replace: bool = False,
@@ -85,7 +87,7 @@ class Playable:
                     "{" + meta.name + "}", fix_filename(meta.string)
                 )
         file_path = library.joinpath(output).expanduser()
-        if file_path.exists() and not replace:
+        if file_path.with_suffix("." + ext).exists() and not replace:
             raise FileExistsError("File already downloaded")
         else:
             file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -196,6 +198,40 @@ class Track(PlayableContentFeeder.LoadedStream, Playable):
                 ]
             )
             return self.__lyrics
+
+    def write_audio_stream(
+        self,
+        output: Path | str,
+        p_bar: tqdm = tqdm(disable=True),
+        real_time: bool = False,
+    ) -> LocalFile:
+        """
+        Writes audio stream to file
+        Args:
+            output: File path of saved audio stream
+            p_bar: tqdm progress bar
+            real_time: Enable delay to emulate real time streaming
+        Returns:
+            LocalFile object
+        """
+        if not isinstance(output, Path):
+            output = Path(output).expanduser()
+        if not real_time:
+            return super().write_audio_stream(output)
+        file = f"{output}.ogg"
+        time_start = time()
+        downloaded = 0
+        with open(file, "wb") as f, p_bar as p_bar:
+            chunk = None
+            while chunk != b"":
+                chunk = self.input_stream.stream().read(1024)
+                p_bar.update(f.write(chunk))
+                downloaded += len(chunk)
+                delta_current = time() - time_start
+                delta_required = (downloaded / self.input_stream.size) * (self.duration/1000)
+                if delta_required > delta_current:
+                    sleep(delta_required - delta_current)
+        return LocalFile(Path(file), AudioFormat.VORBIS)
 
 
 class Episode(PlayableContentFeeder.LoadedStream, Playable):
