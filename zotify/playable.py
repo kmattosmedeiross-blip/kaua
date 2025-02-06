@@ -179,6 +179,7 @@ class Track(PlayableContentFeeder.LoadedStream, Playable):
             MetadataEntry("artists", artists),
             MetadataEntry("date", f"{date.year}-{date.month}-{date.day}"),
             MetadataEntry("disc", self.disc_number),
+            MetadataEntry("discnumber", self.disc_number),
             MetadataEntry("duration", self.duration),
             MetadataEntry("explicit", self.explicit, "[E]" if self.explicit else ""),
             MetadataEntry("isrc", self.external_id[0].id),
