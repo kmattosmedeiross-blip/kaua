@@ -270,6 +270,7 @@ class App:
                         playable.library,
                         playable.output_template,
                         self.__config.replace_existing,
+                        self.__config.audio_format,
                     )
                 except FileExistsError:
                     Logger.log(

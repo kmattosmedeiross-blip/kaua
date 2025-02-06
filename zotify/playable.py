@@ -67,6 +67,7 @@ class Playable:
         library: Path | str = Path("./"),
         output: str = "{title}",
         replace: bool = False,
+        format: AudioFormat = AudioFormat.VORBIS,
     ) -> Path:
         """
         Creates save directory for the output file
@@ -85,7 +86,8 @@ class Playable:
                     "{" + meta.name + "}", fix_filename(meta.string)
                 )
         file_path = library.joinpath(output).expanduser()
-        if file_path.exists() and not replace:
+        file_path_for_check = file_path.with_name(file_path.name + "." + format.value.ext)          
+        if file_path_for_check.exists() and not replace:
             raise FileExistsError("File already downloaded")
         else:
             file_path.parent.mkdir(parents=True, exist_ok=True)
