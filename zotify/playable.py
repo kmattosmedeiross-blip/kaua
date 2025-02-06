@@ -67,6 +67,7 @@ class Playable:
         library: Path | str = Path("./"),
         output: str = "{title}",
         replace: bool = False,
+        format: AudioFormat = AudioFormat.VORBIS,
     ) -> Path:
         """
         Creates save directory for the output file
@@ -85,7 +86,8 @@ class Playable:
                     "{" + meta.name + "}", fix_filename(meta.string)
                 )
         file_path = library.joinpath(output).expanduser()
-        if file_path.exists() and not replace:
+        file_path_for_check = file_path.with_name(file_path.name + "." + format.value.ext)          
+        if file_path_for_check.exists() and not replace:
             raise FileExistsError("File already downloaded")
         else:
             file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -151,14 +153,33 @@ class Track(PlayableContentFeeder.LoadedStream, Playable):
             self.track.album = self.__api().get_metadata_4_album(
                 AlbumId.from_hex(bytes_to_hex(self.album.gid))
             )
+        artist_name, genres_list = self.__api.get_localized_artist_name(self.artist[0])
+        artists = []
+        for artist in self.artist:
+            extra_artist_name, extra_genres = self.__api.get_localized_artist_name(artist)
+            if extra_artist_name:
+                artists.append(extra_artist_name)
+            genres_list.extend(extra_genres)
+
+        album_artist_name, extra_genres = self.__api.get_localized_artist_name(self.album.artist[0])
+        genres_list = list(set(genres_list + extra_genres))
+        
+        album_artists = []
+        for artist in self.album.artist:
+            extra_artist_name, album_extra_genres = self.__api.get_localized_artist_name(artist)
+            if extra_artist_name:
+                album_artists.append(extra_artist_name)
+            genres_list = list(set(genres_list + album_extra_genres))
+        genres = "; ".join(str(item) for item in set(genres_list))
         return [
             MetadataEntry("album", self.album.name),
-            MetadataEntry("album_artist", self.album.artist[0].name),
-            MetadataEntry("album_artists", [a.name for a in self.album.artist]),
-            MetadataEntry("artist", self.artist[0].name),
-            MetadataEntry("artists", [a.name for a in self.artist]),
+            MetadataEntry("album_artist", album_artist_name),
+            MetadataEntry("album_artists", album_artists),
+            MetadataEntry("artist", artist_name),
+            MetadataEntry("artists", artists),
             MetadataEntry("date", f"{date.year}-{date.month}-{date.day}"),
             MetadataEntry("disc", self.disc_number),
+            MetadataEntry("discnumber", self.disc_number),
             MetadataEntry("duration", self.duration),
             MetadataEntry("explicit", self.explicit, "[E]" if self.explicit else ""),
             MetadataEntry("isrc", self.external_id[0].id),
@@ -167,6 +188,7 @@ class Track(PlayableContentFeeder.LoadedStream, Playable):
             MetadataEntry("title", self.name),
             MetadataEntry("track", self.name),
             MetadataEntry("year", date.year),
+            MetadataEntry("genre", genres),
             MetadataEntry(
                 "replaygain_track_gain", self.normalization_data.track_gain_db, ""
             ),
