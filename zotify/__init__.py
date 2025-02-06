@@ -30,7 +30,7 @@ from requests import HTTPError, get, post
 
 from zotify.loader import Loader
 from zotify.playable import Episode, Track
-from zotify.utils import Quality
+from zotify.utils import Quality, bytes_to_base62
 
 API_URL = "https://api.sp" + "otify.com/v1/"
 AUTH_URL = "https://accounts.sp" + "otify.com/"
@@ -226,6 +226,7 @@ class ApiClient(LibrespotApiClient):
     def __init__(self, session: Session):
         super(ApiClient, self).__init__(session)
         self.__session = session
+        self.__localized_artist_names = {}
 
     def invoke_url(
         self,
@@ -262,6 +263,22 @@ class ApiClient(LibrespotApiClient):
             )
         except KeyError:
             return data
+
+    def get_localized_artist_name(self, artist_info) -> str:
+        gid = bytes_to_base62(artist_info.gid)
+        name = artist_info.name
+        
+        if not gid:
+            return name
+        if gid in self.__localized_artist_names:
+            return self.__localized_artist_names[gid]
+        artist_info = self.invoke_url(f"artists/{gid}")
+        artist_name = artist_info.get("name")
+        artist_genres = artist_info.get("genres", [])
+        if artist_name:
+            self.__localized_artist_names[gid] = (artist_name, artist_genres)
+            name = artist_name
+        return name, artist_genres
 
     def __get_token(self) -> str:
         return (

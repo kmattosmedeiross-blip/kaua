@@ -151,12 +151,30 @@ class Track(PlayableContentFeeder.LoadedStream, Playable):
             self.track.album = self.__api().get_metadata_4_album(
                 AlbumId.from_hex(bytes_to_hex(self.album.gid))
             )
+        artist_name, genres_list = self.__api.get_localized_artist_name(self.artist[0])
+        artists = []
+        for artist in self.artist:
+            extra_artist_name, extra_genres = self.__api.get_localized_artist_name(artist)
+            if extra_artist_name:
+                artists.append(extra_artist_name)
+            genres_list.extend(extra_genres)
+
+        album_artist_name, extra_genres = self.__api.get_localized_artist_name(self.album.artist[0])
+        genres_list = list(set(genres_list + extra_genres))
+        
+        album_artists = []
+        for artist in self.album.artist:
+            extra_artist_name, album_extra_genres = self.__api.get_localized_artist_name(artist)
+            if extra_artist_name:
+                album_artists.append(extra_artist_name)
+            genres_list = list(set(genres_list + album_extra_genres))
+        genres = "; ".join(str(item) for item in set(genres_list))
         return [
             MetadataEntry("album", self.album.name),
-            MetadataEntry("album_artist", self.album.artist[0].name),
-            MetadataEntry("album_artists", [a.name for a in self.album.artist]),
-            MetadataEntry("artist", self.artist[0].name),
-            MetadataEntry("artists", [a.name for a in self.artist]),
+            MetadataEntry("album_artist", album_artist_name),
+            MetadataEntry("album_artists", album_artists),
+            MetadataEntry("artist", artist_name),
+            MetadataEntry("artists", artists),
             MetadataEntry("date", f"{date.year}-{date.month}-{date.day}"),
             MetadataEntry("disc", self.disc_number),
             MetadataEntry("duration", self.duration),
@@ -167,6 +185,7 @@ class Track(PlayableContentFeeder.LoadedStream, Playable):
             MetadataEntry("title", self.name),
             MetadataEntry("track", self.name),
             MetadataEntry("year", date.year),
+            MetadataEntry("genre", genres),
             MetadataEntry(
                 "replaygain_track_gain", self.normalization_data.track_gain_db, ""
             ),
