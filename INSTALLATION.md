@@ -14,7 +14,7 @@ There are other ways to install and run Zotify on Windows but this is the offici
   - `python3 -m pip install --user pipx`
   - `python3 -m pipx ensurepath`
 Now close PowerShell and reopen it to ensure the pipx command is available.
-- Install Zotify with: `pipx install https://get.zotify.xyz`
+- Install Zotify with: `pipx install git+https://github.com/zotify-dev/zotify.git`
 - Done! Use `zotify --help` for a basic list of commands or check the *README.md* file in Zotify's code repository for full documentation.
 
 > **macOS**
