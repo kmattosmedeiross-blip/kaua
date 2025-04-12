@@ -8,7 +8,7 @@ There are other ways to install and run Zotify on Windows but this is the offici
 - Open PowerShell (cmd will not work)
 - Install Scoop by running:
   - `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`
-  - `irm get.scoop.sh | iex`
+  - `iex "& {$(irm get.scoop.sh)} -RunAsAdmin`
 - After installing scoop run: `scoop install python ffmpeg-shared git`
 - Install pipx:
   - `python3 -m pip install --user pipx`
