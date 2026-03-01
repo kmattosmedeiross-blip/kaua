@@ -28,12 +28,42 @@ Dependencies:
 - Python 3.9 or greater
 - FFmpeg
 
-Installation:
+Installation (recommended):
 
-python -m pip install git+https://zotify.xyz/zotify/zotify.git
+pipx install https://get.zotify.xyz
+
+Alternative from source (GitHub):
+
+python -m pip install git+https://github.com/zotify-dev/zotify.git
 ```
 
 See [INSTALLATION](INSTALLATION.md) for a more detailed and opinionated installation walkthrough.
+
+If you want a standalone app file (Windows `.exe`), see [BUILD_APP](BUILD_APP.md).
+
+### Download installer/app file (no terminal commands)
+
+If you do not want to use PowerShell/CMD, download the ready app file built by GitHub Actions:
+
+1. Open the repository on GitHub.
+2. Click **Actions**.
+3. Open the latest **Build Windows App** run.
+4. In **Artifacts**, download **ZotifyDesktop-Windows**.
+5. Extract and run `ZotifyDesktop.exe`.
+
+> Note: Windows may show SmartScreen because the file is unsigned. Use "More info" -> "Run anyway" if you trust your own build.
+
+### App mode (no command-line arguments)
+
+After installing, you can launch a simple desktop app:
+
+```
+zotify-app
+```
+
+This opens a window where you can paste Spotify links and start downloads with buttons.
+
+If `zotify-app` is not recognized, restart the terminal/session after install so PATH updates take effect.
 
 ### Command line usage
 
