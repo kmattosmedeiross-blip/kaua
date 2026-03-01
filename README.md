@@ -35,6 +35,16 @@ python -m pip install git+https://zotify.xyz/zotify/zotify.git
 
 See [INSTALLATION](INSTALLATION.md) for a more detailed and opinionated installation walkthrough.
 
+### App mode (no command-line arguments)
+
+After installing, you can launch a simple desktop app:
+
+```
+zotify-app
+```
+
+This opens a window where you can paste Spotify links and start downloads with buttons.
+
 ### Command line usage
 
 ```
