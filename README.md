@@ -28,9 +28,13 @@ Dependencies:
 - Python 3.9 or greater
 - FFmpeg
 
-Installation:
+Installation (recommended):
 
-python -m pip install git+https://zotify.xyz/zotify/zotify.git
+pipx install https://get.zotify.xyz
+
+Alternative from source (GitHub):
+
+python -m pip install git+https://github.com/zotify-dev/zotify.git
 ```
 
 See [INSTALLATION](INSTALLATION.md) for a more detailed and opinionated installation walkthrough.
@@ -44,6 +48,8 @@ zotify-app
 ```
 
 This opens a window where you can paste Spotify links and start downloads with buttons.
+
+If `zotify-app` is not recognized, restart the terminal/session after install so PATH updates take effect.
 
 ### Command line usage
 
