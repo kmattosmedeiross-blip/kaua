@@ -1,66 +1,89 @@
-"""Simple desktop interface for running Zotify downloads without CLI arguments."""
+"""Desktop app for Zotify downloads."""
 
 from __future__ import annotations
 
 from argparse import Namespace
+from pathlib import Path
+from queue import Empty, Queue
 from threading import Thread
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import filedialog, messagebox
 
 from zotify.app import client
 from zotify.config import CONFIG_VALUES
 
 
-class ZotifyGUI:
+class ZotifyApp:
+    """Small desktop wrapper around the existing Zotify client."""
+
     def __init__(self) -> None:
         self.root = tk.Tk()
-        self.root.title("Zotify App")
-        self.root.geometry("720x360")
-        self.root.resizable(False, False)
+        self.root.title("Zotify Desktop")
+        self.root.geometry("900x620")
+        self.root.minsize(820, 560)
+
+        self.output_var = tk.StringVar(value=str(Path.home() / "Music" / "Zotify Music"))
+        self.status_var = tk.StringVar(value="Pronto para baixar.")
+        self.log_queue: Queue[str] = Queue()
 
         self._build_ui()
+        self._poll_logs()
 
     def _build_ui(self) -> None:
-        container = tk.Frame(self.root, padx=20, pady=20)
-        container.pack(fill=tk.BOTH, expand=True)
+        main = tk.Frame(self.root, padx=16, pady=16)
+        main.pack(fill=tk.BOTH, expand=True)
 
-        title = tk.Label(container, text="Zotify", font=("Arial", 20, "bold"))
-        title.pack(anchor="w")
+        tk.Label(main, text="Zotify Desktop", font=("Segoe UI", 20, "bold")).pack(anchor="w")
+        tk.Label(
+            main,
+            text="Cole um ou mais links do Spotify (um por linha) e clique em Baixar.",
+            fg="#4b5563",
+        ).pack(anchor="w", pady=(0, 12))
 
-        subtitle = tk.Label(
-            container,
-            text="Cole links do Spotify abaixo e clique em Baixar. Também há atalhos para curtidas e playlists.",
-            fg="#333333",
-            justify=tk.LEFT,
+        output_frame = tk.LabelFrame(main, text="Pasta de destino", padx=10, pady=10)
+        output_frame.pack(fill=tk.X, pady=(0, 10))
+
+        tk.Entry(output_frame, textvariable=self.output_var).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        tk.Button(output_frame, text="Escolher...", command=self.choose_output_dir).pack(side=tk.LEFT, padx=(8, 0))
+
+        links_frame = tk.LabelFrame(main, text="Links Spotify", padx=10, pady=10)
+        links_frame.pack(fill=tk.BOTH, expand=True)
+
+        self.links_text = tk.Text(links_frame, height=12, wrap=tk.WORD)
+        self.links_text.pack(fill=tk.BOTH, expand=True)
+
+        helper = (
+            "Suporta link de música, álbum, playlist, artista, episódio e podcast. "
+            "Ex.: https://open.spotify.com/track/..."
         )
-        subtitle.pack(anchor="w", pady=(0, 12))
+        tk.Label(main, text=helper, fg="#6b7280").pack(anchor="w", pady=(8, 10))
 
-        self.urls_text = tk.Text(container, height=10, width=88)
-        self.urls_text.pack(fill=tk.X)
+        actions = tk.Frame(main)
+        actions.pack(fill=tk.X, pady=(0, 10))
 
-        hint = tk.Label(
-            container,
-            text="Aceita múltiplos links (um por linha): música, álbum, playlist, artista, episódio ou podcast.",
-            fg="#666666",
-            justify=tk.LEFT,
-        )
-        hint.pack(anchor="w", pady=(6, 12))
+        self.download_btn = tk.Button(actions, text="Baixar links", width=18, command=self.download_links)
+        self.download_btn.pack(side=tk.LEFT)
+        tk.Button(actions, text="Baixar curtidas", width=18, command=self.download_liked).pack(side=tk.LEFT, padx=8)
+        tk.Button(actions, text="Baixar playlists", width=18, command=self.download_playlists).pack(side=tk.LEFT)
+        tk.Button(actions, text="Baixar seguidos", width=18, command=self.download_followed).pack(side=tk.LEFT, padx=8)
 
-        buttons = tk.Frame(container)
-        buttons.pack(anchor="w")
+        status = tk.Label(main, textvariable=self.status_var, fg="#1f2937")
+        status.pack(anchor="w", pady=(4, 6))
 
-        tk.Button(buttons, text="Baixar links", command=self.download_links, width=18).grid(row=0, column=0, padx=(0, 8))
-        tk.Button(buttons, text="Músicas curtidas", command=self.download_liked, width=18).grid(row=0, column=1, padx=(0, 8))
-        tk.Button(buttons, text="Playlists salvas", command=self.download_playlist, width=18).grid(row=0, column=2, padx=(0, 8))
-        tk.Button(buttons, text="Artistas seguidos", command=self.download_followed, width=18).grid(row=0, column=3)
+        logs_frame = tk.LabelFrame(main, text="Logs", padx=10, pady=10)
+        logs_frame.pack(fill=tk.BOTH, expand=True)
 
-        self.status_var = tk.StringVar(value="Pronto.")
-        status = tk.Label(container, textvariable=self.status_var, fg="#444444")
-        status.pack(anchor="w", pady=(16, 0))
+        self.logs_text = tk.Text(logs_frame, height=10, wrap=tk.WORD, state=tk.DISABLED)
+        self.logs_text.pack(fill=tk.BOTH, expand=True)
 
-    def _base_args(self) -> Namespace:
-        args = {
-            "no_splash": False,
+    def choose_output_dir(self) -> None:
+        selected = filedialog.askdirectory(initialdir=self.output_var.get() or str(Path.home()))
+        if selected:
+            self.output_var.set(selected)
+
+    def _default_args(self) -> Namespace:
+        data = {
+            "no_splash": True,
             "config_location": None,
             "username": None,
             "password": None,
@@ -71,56 +94,81 @@ class ZotifyGUI:
             "search": None,
             "download": None,
         }
-
         for config_key in CONFIG_VALUES:
-            args[config_key.lower()] = None
+            data[config_key.lower()] = None
 
-        return Namespace(**args)
+        data["root_path"] = self.output_var.get().strip() or None
+        return Namespace(**data)
 
-    def _run_client(self, args: Namespace, started_message: str) -> None:
-        self.status_var.set(started_message)
-
-        def run() -> None:
-            try:
-                client(args)
-                self.root.after(0, lambda: self.status_var.set("Concluído."))
-            except Exception as exc:  # noqa: BLE001
-                self.root.after(0, lambda: self.status_var.set("Falhou. Veja detalhes no terminal."))
-                self.root.after(0, lambda: messagebox.showerror("Erro", str(exc)))
-
-        Thread(target=run, daemon=True).start()
-
-    def download_links(self) -> None:
-        urls = [line.strip() for line in self.urls_text.get("1.0", tk.END).splitlines() if line.strip()]
-        if not urls:
-            messagebox.showwarning("Atenção", "Cole pelo menos um link do Spotify para baixar.")
+    def _run_task(self, args: Namespace, status_text: str) -> None:
+        if not self.output_var.get().strip():
+            messagebox.showwarning("Destino", "Escolha uma pasta de destino primeiro.")
             return
 
-        args = self._base_args()
+        self.download_btn.configure(state=tk.DISABLED)
+        self.status_var.set(status_text)
+        self._log("Iniciando download...")
+
+        def worker() -> None:
+            try:
+                client(args)
+            except Exception as exc:  # noqa: BLE001
+                self.log_queue.put(f"Erro: {exc}")
+                self.root.after(0, lambda: self.status_var.set("Falha durante download."))
+                self.root.after(0, lambda: messagebox.showerror("Erro", str(exc)))
+            else:
+                self.log_queue.put("Download concluído.")
+                self.root.after(0, lambda: self.status_var.set("Concluído com sucesso."))
+            finally:
+                self.root.after(0, lambda: self.download_btn.configure(state=tk.NORMAL))
+
+        Thread(target=worker, daemon=True).start()
+
+    def _log(self, message: str) -> None:
+        self.logs_text.configure(state=tk.NORMAL)
+        self.logs_text.insert(tk.END, f"{message}\n")
+        self.logs_text.see(tk.END)
+        self.logs_text.configure(state=tk.DISABLED)
+
+    def _poll_logs(self) -> None:
+        try:
+            while True:
+                self._log(self.log_queue.get_nowait())
+        except Empty:
+            pass
+        self.root.after(250, self._poll_logs)
+
+    def download_links(self) -> None:
+        urls = [line.strip() for line in self.links_text.get("1.0", tk.END).splitlines() if line.strip()]
+        if not urls:
+            messagebox.showwarning("Links", "Cole ao menos um link do Spotify.")
+            return
+
+        args = self._default_args()
         args.urls = urls
-        self._run_client(args, "Baixando links...")
+        self._run_task(args, "Baixando links informados...")
 
     def download_liked(self) -> None:
-        args = self._base_args()
+        args = self._default_args()
         args.liked_songs = True
-        self._run_client(args, "Baixando músicas curtidas...")
+        self._run_task(args, "Baixando músicas curtidas...")
 
-    def download_playlist(self) -> None:
-        args = self._base_args()
+    def download_playlists(self) -> None:
+        args = self._default_args()
         args.playlist = True
-        self._run_client(args, "Baixando playlist salva...")
+        self._run_task(args, "Baixando playlists salvas...")
 
     def download_followed(self) -> None:
-        args = self._base_args()
+        args = self._default_args()
         args.followed_artists = True
-        self._run_client(args, "Baixando artistas seguidos...")
+        self._run_task(args, "Baixando artistas seguidos...")
 
     def run(self) -> None:
         self.root.mainloop()
 
 
 def main() -> None:
-    ZotifyGUI().run()
+    ZotifyApp().run()
 
 
 if __name__ == "__main__":

@@ -39,6 +39,8 @@ python -m pip install git+https://github.com/zotify-dev/zotify.git
 
 See [INSTALLATION](INSTALLATION.md) for a more detailed and opinionated installation walkthrough.
 
+If you want a standalone app file (Windows `.exe`), see [BUILD_APP](BUILD_APP.md).
+
 ### App mode (no command-line arguments)
 
 After installing, you can launch a simple desktop app:
