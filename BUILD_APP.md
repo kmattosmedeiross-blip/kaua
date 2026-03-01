@@ -19,3 +19,7 @@ If you want a single installable executable for Windows:
 ## Notes
 - You still need ffmpeg available on the machine.
 - First launch may trigger Windows SmartScreen for unsigned executables.
+
+## No-command option for end users
+
+Repository maintainers can run the **Build Windows App** GitHub Action and share the generated artifact (`ZotifyDesktop-Windows`) so users only download and open `ZotifyDesktop.exe`.

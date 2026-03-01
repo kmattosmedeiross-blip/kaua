@@ -41,6 +41,18 @@ See [INSTALLATION](INSTALLATION.md) for a more detailed and opinionated installa
 
 If you want a standalone app file (Windows `.exe`), see [BUILD_APP](BUILD_APP.md).
 
+### Download installer/app file (no terminal commands)
+
+If you do not want to use PowerShell/CMD, download the ready app file built by GitHub Actions:
+
+1. Open the repository on GitHub.
+2. Click **Actions**.
+3. Open the latest **Build Windows App** run.
+4. In **Artifacts**, download **ZotifyDesktop-Windows**.
+5. Extract and run `ZotifyDesktop.exe`.
+
+> Note: Windows may show SmartScreen because the file is unsigned. Use "More info" -> "Run anyway" if you trust your own build.
+
 ### App mode (no command-line arguments)
 
 After installing, you can launch a simple desktop app:
